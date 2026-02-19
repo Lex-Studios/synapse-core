@@ -1,8 +1,10 @@
 mod config;
 mod db;
 mod handlers;
+mod middleware;
 
-use axum::{Router, extract::State, routing::get};
+use axum::{Router, routing::{get, post}};
+use middleware::ip_filter::IpFilterLayer;
 use sqlx::migrate::Migrator; // for Migrator
 use std::net::SocketAddr; // for SocketAddr
 use std::path::Path; // for Path
@@ -37,15 +39,23 @@ async fn main() -> anyhow::Result<()> {
 
     // Build router with state
     let app_state = AppState { db: pool };
+    let callback_routes = Router::new()
+        .route("/transaction", post(handlers::callback_transaction))
+        .layer(IpFilterLayer::new(
+            config.allowed_ips.clone(),
+            config.trusted_proxy_depth,
+        ));
+
     let app = Router::new()
         .route("/health", get(handlers::health))
+        .nest("/callback", callback_routes)
         .with_state(app_state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], config.server_port));
     tracing::info!("listening on {}", addr);
 
     let listener = TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await?;
 
     Ok(())
 }
