@@ -8,6 +8,8 @@ use axum::{
 use serde::{Deserialize, Serialize};
 
 pub mod webhook;
+pub mod dlq;
+pub mod settlements;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HealthStatus {

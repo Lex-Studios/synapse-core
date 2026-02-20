@@ -19,7 +19,6 @@ pub fn create_app(state: AppState) -> Router {
         .route("/health", get(handlers::health))
         .route("/settlements", get(handlers::settlements::list_settlements))
         .route("/settlements/:id", get(handlers::settlements::get_settlement))
-        .route("/callback", axum::routing::post(handlers::webhook::callback))
-        .route("/transactions/:id", get(handlers::webhook::get_transaction))
+        .route("/webhook", axum::routing::post(handlers::webhook::handle_webhook))
         .with_state(state)
 }
