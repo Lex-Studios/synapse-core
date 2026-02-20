@@ -50,6 +50,7 @@ async fn main() -> anyhow::Result<()> {
     };
     let app = Router::new()
         .route("/health", get(handlers::health))
+        .route("/transactions/export", get(handlers::export::export_transactions))
         .with_state(app_state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], config.server_port));
