@@ -8,8 +8,7 @@ pub struct Config {
     pub server_port: u16,
     pub database_url: String,
     pub stellar_horizon_url: String,
-    pub allowed_ips: AllowedIps,
-    pub trusted_proxy_depth: usize,
+    pub redis_url: String,
 }
 
 #[derive(Debug, Clone)]
@@ -32,10 +31,7 @@ impl Config {
                 .parse()?,
             database_url: env::var("DATABASE_URL")?,
             stellar_horizon_url: env::var("STELLAR_HORIZON_URL")?,
-            allowed_ips,
-            trusted_proxy_depth: env::var("TRUSTED_PROXY_DEPTH")
-                .unwrap_or_else(|_| "1".to_string())
-                .parse()?,
+            redis_url: env::var("REDIS_URL")?,
         })
     }
 }
