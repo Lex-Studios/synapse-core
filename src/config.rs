@@ -21,6 +21,10 @@ impl Config {
         let _allowed_ips =
             parse_allowed_ips(&env::var("ALLOWED_IPS").unwrap_or_else(|_| "*".to_string()))?;
 
+        let log_format = parse_log_format(
+            &env::var("LOG_FORMAT").unwrap_or_else(|_| "text".to_string()),
+        )?;
+
         Ok(Config {
             server_port: env::var("SERVER_PORT")
                 .unwrap_or_else(|_| "3000".to_string())
@@ -51,4 +55,12 @@ fn parse_allowed_ips(raw: &str) -> anyhow::Result<AllowedIps> {
     }
 
     Ok(AllowedIps::Cidrs(cidrs))
+}
+
+fn parse_log_format(raw: &str) -> anyhow::Result<LogFormat> {
+    match raw.trim().to_ascii_lowercase().as_str() {
+        "text" => Ok(LogFormat::Text),
+        "json" => Ok(LogFormat::Json),
+        _ => anyhow::bail!("LOG_FORMAT must be 'text' or 'json'"),
+    }
 }
