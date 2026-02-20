@@ -1,5 +1,5 @@
-use failsafe::{backoff, failure_policy, Config, Error as FailsafeError, StateMachine};
 use failsafe::futures::CircuitBreaker;
+use failsafe::{Config, Error as FailsafeError, StateMachine, backoff, failure_policy};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -43,10 +43,7 @@ pub struct Balance {
 pub struct HorizonClient {
     client: Client,
     base_url: String,
-    circuit_breaker: StateMachine<
-        failure_policy::ConsecutiveFailures<backoff::Exponential>,
-        (),
-    >,
+    circuit_breaker: StateMachine<failure_policy::ConsecutiveFailures<backoff::Exponential>, ()>,
 }
 
 impl HorizonClient {
@@ -79,7 +76,11 @@ impl HorizonClient {
 
     /// Fetches account details from the Horizon API
     pub async fn get_account(&self, address: &str) -> Result<AccountResponse, HorizonError> {
-        let url = format!("{}/accounts/{}", self.base_url.trim_end_matches('/'), address);
+        let url = format!(
+            "{}/accounts/{}",
+            self.base_url.trim_end_matches('/'),
+            address
+        );
         let client = self.client.clone();
         let addr = address.to_string();
 
@@ -127,8 +128,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_account_with_mock() {
-        use mockito::Mock;
-
         let mut server = mockito::Server::new();
 
         let mock_response = r#"{
