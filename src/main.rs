@@ -73,7 +73,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("listening on {}", addr);
 
     let listener = TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await?;
 
     Ok(())
 }
