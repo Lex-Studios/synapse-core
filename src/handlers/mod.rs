@@ -5,16 +5,13 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 pub mod webhook;
-<<<<<<< feature/issue-19-dead-letter-queue
-pub mod dlq;
-pub mod settlements;
-=======
 pub mod graphql;
->>>>>>> main
 
-#[derive(Debug, Serialize, Deserialize)]
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct HealthStatus {
     status: String,
     version: String,
