@@ -8,6 +8,7 @@ pub struct Config {
     pub database_url: String,
     pub database_replica_url: Option<String>,
     pub stellar_horizon_url: String,
+    pub anchor_webhook_secret: String,
 }
 impl Config {
     pub fn from_env() -> anyhow::Result<Self> {
@@ -20,6 +21,7 @@ impl Config {
             database_url: env::var("DATABASE_URL")?,
             database_replica_url: env::var("DATABASE_REPLICA_URL").ok(),
             stellar_horizon_url: env::var("STELLAR_HORIZON_URL")?,
+            anchor_webhook_secret: env::var("ANCHOR_WEBHOOK_SECRET")?,
         })
     }
 }
