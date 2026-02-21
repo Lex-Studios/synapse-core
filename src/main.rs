@@ -275,6 +275,11 @@ async fn serve(config: config::Config) -> anyhow::Result<()> {
     let idempotency_service = IdempotencyService::new(&config.redis_url)?;
     tracing::info!("Redis idempotency service initialized");
 
+    // Create broadcast channel for WebSocket notifications
+    // Channel capacity of 100 - slow clients will miss old messages (backpressure handling)
+    let (tx_broadcast, _) = broadcast::channel::<TransactionStatusUpdate>(100);
+    tracing::info!("WebSocket broadcast channel initialized");
+
     // Build router with state
     let app_state = AppState {
         db: pool,
