@@ -9,6 +9,10 @@ use utoipa::ToSchema;
 
 pub mod webhook;
 pub mod settlements;
+pub mod graphql;
+pub mod settlements;
+pub mod dlq;
+pub mod admin;
 
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
