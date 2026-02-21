@@ -1,4 +1,3 @@
-use crate::AppState;
 use axum::{
     extract::State,
     http::StatusCode,
@@ -6,17 +5,24 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-#[derive(Debug, Serialize, Deserialize)]
+pub mod webhook;
+pub mod graphql;
+
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct HealthStatus {
     status: String,
     version: String,
     db: String,
 }
 
-pub async fn health(State(state): State<AppState>) -> impl IntoResponse {
+use crate::ApiState;
+
+pub async fn health(State(state): State<ApiState>) -> impl IntoResponse {
     // Check database connectivity with SELECT 1 query
-    let db_status = match sqlx::query("SELECT 1").execute(&state.db).await {
+    let db_status = match sqlx::query("SELECT 1").execute(&state.app_state.db).await {
         Ok(_) => "connected",
         Err(_) => "disconnected",
     };
@@ -39,4 +45,8 @@ pub async fn health(State(state): State<AppState>) -> impl IntoResponse {
     };
 
     (status_code, Json(health_response))
+}
+
+pub async fn callback_transaction(State(_state): State<AppState>) -> impl IntoResponse {
+    StatusCode::NOT_IMPLEMENTED
 }

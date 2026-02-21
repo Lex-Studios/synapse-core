@@ -1,12 +1,15 @@
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use sqlx::types::BigDecimal;
 use uuid::Uuid;
+use utoipa::ToSchema;
 
-#[derive(Debug, FromRow)]
+#[derive(Debug, FromRow, Serialize, Deserialize, async_graphql::SimpleObject)]
 pub struct Transaction {
     pub id: Uuid,
     pub stellar_account: String,
+    #[serde(with = "bigdecimal_serde")]
     pub amount: BigDecimal, // now available
     pub asset_code: String,
     pub status: String,
@@ -15,6 +18,7 @@ pub struct Transaction {
     pub anchor_transaction_id: Option<String>,
     pub callback_type: Option<String>,
     pub callback_status: Option<String>,
+    pub settlement_id: Option<Uuid>,
 }
 
 impl Transaction {
@@ -37,8 +41,40 @@ impl Transaction {
             anchor_transaction_id,
             callback_type,
             callback_status,
+            settlement_id: None,
         }
     }
+}
+
+#[derive(Debug, FromRow, Serialize, Deserialize, async_graphql::SimpleObject)]
+pub struct Settlement {
+    pub id: Uuid,
+    pub asset_code: String,
+    #[serde(with = "bigdecimal_serde")]
+    pub total_amount: BigDecimal,
+    pub tx_count: i32,
+    pub period_start: DateTime<Utc>,
+    pub period_end: DateTime<Utc>,
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, FromRow, Serialize, Deserialize)]
+pub struct TransactionDlq {
+    pub id: Uuid,
+    pub transaction_id: Uuid,
+    pub stellar_account: String,
+    #[serde(with = "bigdecimal_serde")]
+    pub amount: BigDecimal,
+    pub asset_code: String,
+    pub anchor_transaction_id: Option<String>,
+    pub error_reason: String,
+    pub stack_trace: Option<String>,
+    pub retry_count: i32,
+    pub original_created_at: DateTime<Utc>,
+    pub moved_to_dlq_at: DateTime<Utc>,
+    pub last_retry_at: Option<DateTime<Utc>>,
 }
 #[cfg(test)]
 mod tests {
@@ -167,6 +203,27 @@ mod tests {
         }
         let transactions = crate::db::queries::list_transactions(&pool, 5, 0).await.unwrap();
         assert_eq!(transactions.len(), 5);
+    }
+}
+
+mod bigdecimal_serde {
+    use serde::{Deserialize, Deserializer, Serializer};
+    use sqlx::types::BigDecimal;
+    use std::str::FromStr;
+
+    pub fn serialize<S>(value: &BigDecimal, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&value.to_string())
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<BigDecimal, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        BigDecimal::from_str(&s).map_err(serde::de::Error::custom)
     }
 }
 
