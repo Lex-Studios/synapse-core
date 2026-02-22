@@ -15,8 +15,24 @@ pub struct Pagination {
     pub offset: Option<i64>,
 }
 
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SettlementListResponse {
+    pub settlements: Vec<crate::schemas::SettlementSchema>,
+    pub total: i64,
+}
+
 use crate::ApiState;
 
+#[utoipa::path(
+    get,
+    path = "/settlements",
+    params(Pagination),
+    responses(
+        (status = 200, description = "List of settlements", body = SettlementListResponse),
+        (status = 500, description = "Database error")
+    ),
+    tag = "Settlements"
+)]
 pub async fn list_settlements(
     State(state): State<ApiState>,
     Query(pagination): Query<Pagination>,
