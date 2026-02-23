@@ -371,6 +371,7 @@ async fn serve(config: config::Config) -> anyhow::Result<()> {
     let app = Router::new()
         .route("/health", get(handlers::health))
         .route("/ready", get(handlers::ready))
+        .route("/errors", get(handlers::error_catalog))
         .merge(search_routes)
         .route("/settlements", get(handlers::settlements::list_settlements))
         .route("/settlements/:id", get(handlers::settlements::get_settlement))

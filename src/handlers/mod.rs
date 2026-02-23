@@ -56,3 +56,15 @@ pub struct ReadinessResponse {
     pub status: String,
     pub draining: bool,
 }
+
+/// Error catalog endpoint
+/// Returns all available error codes and their descriptions
+pub async fn error_catalog() -> impl IntoResponse {
+    let errors = crate::error::get_all_error_codes();
+    let catalog = crate::error::ErrorCatalogResponse {
+        errors,
+        version: "1.0.0".to_string(),
+    };
+    
+    (StatusCode::OK, Json(catalog))
+}
