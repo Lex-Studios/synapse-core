@@ -250,11 +250,11 @@ async fn serve(config: config::Config) -> anyhow::Result<()> {
         .with_state(app_state.pool_manager.clone());
     
     let app = Router::new()
-        .merge(api_routes)
-        .merge(webhook_routes)
-        .merge(dlq_routes)
-        .merge(admin_routes)
-        .layer(cors_layer);
+        // Unversioned routes - default to latest (V2) or specific base routes
+        .route("/health", get(handlers::health))
+        .route("/settlements", get(handlers::settlements::list_settlements))
+        .route("/settlements/:id", get(handlers::settlements::get_settlement))
+        .with_state(app_state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], config.server_port));
     tracing::info!("listening on {}", addr);

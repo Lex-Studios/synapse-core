@@ -3,8 +3,8 @@ pub mod settlements;
 pub mod webhook;
 pub mod dlq;
 pub mod admin;
-pub mod graphql;
-pub mod search;
+pub mod v1;
+pub mod v2;
 
 use crate::AppState;
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
