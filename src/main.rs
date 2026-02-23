@@ -112,6 +112,16 @@ async fn main() -> anyhow::Result<()> {
         Some(Commands::Db(db_cmd)) => match db_cmd {
             DbCommands::Migrate => cli::handle_db_migrate(&config).await,
         },
+        Some(Commands::Backup(backup_cmd)) => match backup_cmd {
+            BackupCommands::Run { backup_type } => {
+                cli::handle_backup_run(&config, &backup_type).await
+            }
+            BackupCommands::List => cli::handle_backup_list(&config).await,
+            BackupCommands::Restore { filename } => {
+                cli::handle_backup_restore(&config, &filename).await
+            }
+            BackupCommands::Cleanup => cli::handle_backup_cleanup(&config).await,
+        },
         Some(Commands::Config) => cli::handle_config_validate(&config),
     }
 }
