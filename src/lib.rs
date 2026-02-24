@@ -52,6 +52,7 @@ pub fn create_app(app_state: AppState) -> Router {
         .route("/callback", post(handlers::webhook::callback))
         .route("/callback/transaction", post(handlers::webhook::callback)) // Backward compatibility
         .route("/transactions/:id", get(handlers::webhook::get_transaction))
+        .route("/transactions/search", get(handlers::search::search_transactions_wrapper))
         // .route("/graphql", post(handlers::graphql::graphql_handler).get(handlers::graphql::subscription_handler))
         // .route("/graphql/playground", get(handlers::graphql::graphql_playground))
         .with_state(api_state)
