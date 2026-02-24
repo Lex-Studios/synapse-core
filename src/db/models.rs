@@ -177,7 +177,7 @@ mod tests {
             .run(&pool)
             .await
             .expect("Failed to run migrations on test DB");
-        
+
         // Create partition for current month (ignore if already exists)
         let _ = sqlx::query(
             r#"
@@ -204,7 +204,7 @@ mod tests {
         )
         .execute(&pool)
         .await;
-        
+
         pool
     }
 

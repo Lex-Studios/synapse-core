@@ -51,10 +51,12 @@ async fn setup_test_app() -> (String, PgPool, impl std::any::Any) {
     .await;
 
     let (tx, _rx) = tokio::sync::broadcast::channel(100);
-    
+
     let app_state = AppState {
         db: pool.clone(),
-        pool_manager: synapse_core::db::pool_manager::PoolManager::new(&database_url, None).await.unwrap(),
+        pool_manager: synapse_core::db::pool_manager::PoolManager::new(&database_url, None)
+            .await
+            .unwrap(),
         horizon_client: synapse_core::stellar::HorizonClient::new(
             "https://horizon-testnet.stellar.org".to_string(),
         ),
