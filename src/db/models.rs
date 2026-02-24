@@ -178,11 +178,10 @@ mod tests {
             .await
             .expect("Failed to run migrations on test DB");
         
-        // Create partition for current month
-        sqlx::query("SELECT create_monthly_partition()")
+        // Create partition for current month (ignore if already exists)
+        let _ = sqlx::query("SELECT create_monthly_partition()")
             .execute(&pool)
-            .await
-            .expect("Failed to create partition");
+            .await;
         
         pool
     }
