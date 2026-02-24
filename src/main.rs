@@ -1,30 +1,29 @@
-use synapse_core::{
-    config, db, handlers, middleware, schemas, startup, metrics, health,
-    AppState, ApiState, ReadinessState,
-    graphql::schema::build_schema,
-    stellar::HorizonClient,
-    middleware::idempotency::IdempotencyService,
-    handlers::ws::TransactionStatusUpdate,
-    services::{FeatureFlagService, SettlementService},
-    db::pool_manager::PoolManager,
-};
 use axum::{
-    Router, 
-    routing::{get, post},
     middleware as axum_middleware,
-    http::{HeaderMap, StatusCode, header::HeaderValue},
-    response::IntoResponse,
-    extract::ConnectInfo,
+    routing::{get, post},
+    Router,
 };
+use clap::Parser;
 use sqlx::migrate::Migrator;
-use tower_http::cors::{CorsLayer, AllowOrigin};
-use std::{net::SocketAddr, path::Path, sync::Arc};
+use std::{net::SocketAddr, path::Path};
+use synapse_core::{
+    config, db,
+    db::pool_manager::PoolManager,
+    graphql::schema::build_schema,
+    handlers,
+    handlers::ws::TransactionStatusUpdate,
+    metrics, middleware,
+    middleware::idempotency::IdempotencyService,
+    schemas,
+    services::{FeatureFlagService, SettlementService},
+    stellar::HorizonClient,
+    ApiState, AppState, ReadinessState,
+};
+use tokio::sync::broadcast;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa::OpenApi;
-use tokio::sync::broadcast;
-use clap::Parser;
 mod cli;
-use cli::{Cli, Commands, DbCommands, TxCommands, BackupCommands};
+use cli::{BackupCommands, Cli, Commands, DbCommands, TxCommands};
 
 /// OpenAPI Schema for the Synapse Core API
 #[derive(OpenApi)]
@@ -117,12 +116,9 @@ async fn serve(config: config::Config) -> anyhow::Result<()> {
     let pool = db::create_pool(&config).await?;
 
     // Initialize pool manager for multi-region failover
-    let pool_manager = PoolManager::new(
-        &config.database_url,
-        config.database_replica_url.as_deref(),
-    )
-    .await?;
-    
+    let pool_manager =
+        PoolManager::new(&config.database_url, config.database_replica_url.as_deref()).await?;
+
     if pool_manager.replica().is_some() {
         tracing::info!("Database replica configured - read queries will be routed to replica");
     } else {
@@ -147,8 +143,8 @@ async fn serve(config: config::Config) -> anyhow::Result<()> {
     );
 
     // Initialize Settlement Service
-    let settlement_service = SettlementService::new(pool.clone());
-    
+    let _settlement_service = SettlementService::new(pool.clone());
+
     // Start background settlement worker
     let settlement_pool = pool.clone();
     tokio::spawn(async move {
@@ -169,23 +165,26 @@ async fn serve(config: config::Config) -> anyhow::Result<()> {
     });
 
     // Initialize metrics
-    let metrics_handle = metrics::init_metrics()
+    let _metrics_handle = metrics::init_metrics()
         .map_err(|e| anyhow::anyhow!("Failed to initialize metrics: {}", e))?;
     tracing::info!("Metrics initialized successfully");
 
     // Initialize rate limiting
     // let rate_limit_config = Arc::new(RateLimitConfig::new(&config));
-    
+
     // Load whitelisted IPs from config
     // if !config.whitelisted_ips.is_empty() {
     //     rate_limit_config.load_whitelisted_ips(&config.whitelisted_ips).await;
     // }
-    
-    tracing::info!("Rate limiting configured: {} req/sec (default), {} req/sec (whitelisted)", 
-                   config.default_rate_limit, config.whitelist_rate_limit);
+
+    tracing::info!(
+        "Rate limiting configured: {} req/sec (default), {} req/sec (whitelisted)",
+        config.default_rate_limit,
+        config.whitelist_rate_limit
+    );
 
     // Initialize Redis idempotency service
-    let idempotency_service = IdempotencyService::new(&config.redis_url)?;
+    let _idempotency_service = IdempotencyService::new(&config.redis_url)?;
     tracing::info!("Redis idempotency service initialized");
 
     // Create broadcast channel for WebSocket notifications
@@ -219,16 +218,19 @@ async fn serve(config: config::Config) -> anyhow::Result<()> {
         pool_monitor_task(monitor_pool).await;
     });
 
-    let api_routes: Router = Router::new()
+    let _api_routes: Router = Router::new()
         .route("/health", get(handlers::health))
         .route("/settlements", get(handlers::settlements::list_settlements))
-        .route("/settlements/:id", get(handlers::settlements::get_settlement))
+        .route(
+            "/settlements/:id",
+            get(handlers::settlements::get_settlement),
+        )
         .route("/callback", post(handlers::webhook::callback))
         .route("/transactions/:id", get(handlers::webhook::get_transaction))
         .route("/graphql", post(handlers::graphql::graphql_handler))
         .with_state(api_state.clone());
 
-    let webhook_routes: Router = Router::new()
+    let _webhook_routes: Router = Router::new()
         .route("/webhook", post(handlers::webhook::handle_webhook))
         .layer(axum_middleware::from_fn_with_state(
             config.clone(),
@@ -236,23 +238,28 @@ async fn serve(config: config::Config) -> anyhow::Result<()> {
         ))
         .with_state(api_state.clone());
 
-    let dlq_routes: Router = handlers::dlq::dlq_routes()
-        .with_state(api_state.app_state.db.clone());
+    let _dlq_routes: Router = handlers::dlq::dlq_routes().with_state(api_state.app_state.db.clone());
 
-    let admin_routes: Router = Router::new()
+    let _admin_routes: Router = Router::new()
         .nest("/admin/queue", handlers::admin::admin_routes())
         .layer(axum_middleware::from_fn(middleware::auth::admin_auth))
         .with_state(api_state.app_state.db.clone());
 
-    let search_routes: Router = Router::new()
-        .route("/transactions/search", get(handlers::search::search_transactions))
+    let _search_routes: Router = Router::new()
+        .route(
+            "/transactions/search",
+            get(handlers::search::search_transactions),
+        )
         .with_state(api_state.app_state.pool_manager.clone());
-    
+
     let app = Router::new()
         // Unversioned routes - default to latest (V2) or specific base routes
         .route("/health", get(handlers::health))
         .route("/settlements", get(handlers::settlements::list_settlements))
-        .route("/settlements/:id", get(handlers::settlements::get_settlement))
+        .route(
+            "/settlements/:id",
+            get(handlers::settlements::get_settlement),
+        )
         .with_state(api_state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], config.server_port));
@@ -265,19 +272,18 @@ async fn serve(config: config::Config) -> anyhow::Result<()> {
     Ok(())
 }
 
-
 /// Background task to monitor database connection pool usage
 async fn pool_monitor_task(pool: sqlx::PgPool) {
     let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(30));
-    
+
     loop {
         interval.tick().await;
-        
+
         let active = pool.size();
         let idle = pool.num_idle();
         let max = pool.options().get_max_connections();
         let usage_percent = (active as f32 / max as f32) * 100.0;
-        
+
         // Log warning if pool usage exceeds 80%
         if usage_percent >= 80.0 {
             tracing::warn!(

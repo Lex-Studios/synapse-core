@@ -1,24 +1,34 @@
-use synapse_core::{create_app, AppState};
-use testcontainers_modules::postgres::Postgres;
-use testcontainers::runners::AsyncRunner;
-use sqlx::{PgPool, migrate::Migrator};
-use std::path::Path;
-use tokio::net::TcpListener;
 use reqwest::StatusCode;
 use serde_json::json;
+use sqlx::{migrate::Migrator, PgPool};
+use std::path::Path;
+use synapse_core::{create_app, AppState};
+use testcontainers::runners::AsyncRunner;
+use testcontainers_modules::postgres::Postgres;
+use tokio::net::TcpListener;
 
 async fn setup_test_app() -> (String, PgPool, impl std::any::Any) {
     let container = Postgres::default().start().await.unwrap();
     let host_port = container.get_host_port_ipv4(5432).await.unwrap();
-    let database_url = format!("postgres://postgres:postgres@127.0.0.1:{}/postgres", host_port);
+    let database_url = format!(
+        "postgres://postgres:postgres@127.0.0.1:{}/postgres",
+        host_port
+    );
 
     let pool = PgPool::connect(&database_url).await.unwrap();
-    let migrator = Migrator::new(Path::join(Path::new(env!("CARGO_MANIFEST_DIR")), "migrations")).await.unwrap();
+    let migrator = Migrator::new(Path::join(
+        Path::new(env!("CARGO_MANIFEST_DIR")),
+        "migrations",
+    ))
+    .await
+    .unwrap();
     migrator.run(&pool).await.unwrap();
 
     let app_state = AppState {
         db: pool.clone(),
-        horizon_client: synapse_core::stellar::HorizonClient::new("https://horizon-testnet.stellar.org".to_string()),
+        horizon_client: synapse_core::stellar::HorizonClient::new(
+            "https://horizon-testnet.stellar.org".to_string(),
+        ),
     };
     let app = create_app(app_state);
 
@@ -46,7 +56,8 @@ async fn test_valid_deposit_flow() {
         "callback_status": "completed"
     });
 
-    let res = client.post(&format!("{}/callback", base_url))
+    let res = client
+        .post(&format!("{}/callback", base_url))
         .header("X-App-Signature", "valid-signature")
         .json(&payload)
         .send()
@@ -57,7 +68,8 @@ async fn test_valid_deposit_flow() {
     let transaction: serde_json::Value = res.json().await.unwrap();
     let tx_id = transaction["id"].as_str().unwrap();
 
-    let res = client.get(&format!("{}/transactions/{}", base_url, tx_id))
+    let res = client
+        .get(&format!("{}/transactions/{}", base_url, tx_id))
         .send()
         .await
         .unwrap();
@@ -90,7 +102,8 @@ async fn test_callback_with_memo_and_metadata() {
         }
     });
 
-    let res = client.post(&format!("{}/callback", base_url))
+    let res = client
+        .post(&format!("{}/callback", base_url))
         .header("X-App-Signature", "valid-signature")
         .json(&payload)
         .send()
@@ -104,10 +117,14 @@ async fn test_callback_with_memo_and_metadata() {
     assert_eq!(transaction["memo"], "payment for invoice #1042");
     assert_eq!(transaction["memo_type"], "text");
     assert_eq!(transaction["metadata"]["reference_id"], "INV-1042");
-    assert_eq!(transaction["metadata"]["customer_note"], "Monthly subscription");
+    assert_eq!(
+        transaction["metadata"]["customer_note"],
+        "Monthly subscription"
+    );
     assert_eq!(transaction["metadata"]["compliance_tag"], "low_risk");
 
-    let res = client.get(&format!("{}/transactions/{}", base_url, tx_id))
+    let res = client
+        .get(&format!("{}/transactions/{}", base_url, tx_id))
         .send()
         .await
         .unwrap();
@@ -132,7 +149,8 @@ async fn test_callback_with_hash_memo_type() {
         "memo_type": "hash"
     });
 
-    let res = client.post(&format!("{}/callback", base_url))
+    let res = client
+        .post(&format!("{}/callback", base_url))
         .header("X-App-Signature", "valid-signature")
         .json(&payload)
         .send()
@@ -158,7 +176,8 @@ async fn test_callback_with_invalid_memo_type() {
         "memo_type": "invalid_type"
     });
 
-    let res = client.post(&format!("{}/callback", base_url))
+    let res = client
+        .post(&format!("{}/callback", base_url))
         .header("X-App-Signature", "valid-signature")
         .json(&payload)
         .send()
@@ -183,7 +202,8 @@ async fn test_callback_with_metadata_only() {
         }
     });
 
-    let res = client.post(&format!("{}/callback", base_url))
+    let res = client
+        .post(&format!("{}/callback", base_url))
         .header("X-App-Signature", "valid-signature")
         .json(&payload)
         .send()
@@ -210,7 +230,8 @@ async fn test_invalid_signature_flow() {
         "callback_status": "completed"
     });
 
-    let res = client.post(&format!("{}/callback", base_url))
+    let res = client
+        .post(&format!("{}/callback", base_url))
         .header("X-App-Signature", "invalid-signature")
         .json(&payload)
         .send()
@@ -219,5 +240,8 @@ async fn test_invalid_signature_flow() {
 
     assert_eq!(res.status(), StatusCode::BAD_REQUEST);
     let error_res: serde_json::Value = res.json().await.unwrap();
-    assert!(error_res["error"].as_str().unwrap().contains("Invalid signature"));
+    assert!(error_res["error"]
+        .as_str()
+        .unwrap()
+        .contains("Invalid signature"));
 }

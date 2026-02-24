@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use sqlx::PgPool;
-use uuid::Uuid;
 use synapse_core::config::Config;
+use uuid::Uuid;
 
 #[derive(Parser)]
 #[command(name = "synapse-core")]
@@ -15,19 +15,19 @@ pub struct Cli {
 pub enum Commands {
     /// Start the HTTP server (default)
     Serve,
-    
+
     /// Transaction management commands
     #[command(subcommand)]
     Tx(TxCommands),
-    
+
     /// Database management commands
     #[command(subcommand)]
     Db(DbCommands),
-    
+
     /// Backup management commands
     #[command(subcommand)]
     Backup(BackupCommands),
-    
+
     /// Configuration validation
     Config,
 }
@@ -56,17 +56,17 @@ pub enum BackupCommands {
         #[arg(short, long, default_value = "hourly")]
         backup_type: String,
     },
-    
+
     /// List all available backups
     List,
-    
+
     /// Restore from a backup
     Restore {
         /// Backup filename to restore from
         #[arg(value_name = "FILENAME")]
         filename: String,
     },
-    
+
     /// Apply retention policy to clean old backups
     Cleanup,
 }
@@ -98,27 +98,27 @@ pub async fn handle_db_migrate(config: &Config) -> anyhow::Result<()> {
 
     let pool = crate::db::create_pool(config).await?;
     let migrator = Migrator::new(Path::new("./migrations")).await?;
-    
+
     tracing::info!("Running database migrations...");
     migrator.run(&pool).await?;
-    
+
     tracing::info!("Database migrations completed");
     println!("✓ Database migrations completed");
-    
+
     Ok(())
 }
 
 pub fn handle_config_validate(config: &Config) -> anyhow::Result<()> {
     tracing::info!("Validating configuration...");
-    
+
     println!("Configuration:");
     println!("  Server Port: {}", config.server_port);
     println!("  Database URL: {}", mask_password(&config.database_url));
     println!("  Stellar Horizon URL: {}", config.stellar_horizon_url);
-    
+
     tracing::info!("Configuration is valid");
     println!("✓ Configuration is valid");
-    
+
     Ok(())
 }
 
@@ -152,4 +152,3 @@ pub async fn handle_backup_restore(_config: &Config, _filename: &str) -> anyhow:
 pub async fn handle_backup_cleanup(_config: &Config) -> anyhow::Result<()> {
     anyhow::bail!("Backup service not yet implemented")
 }
-

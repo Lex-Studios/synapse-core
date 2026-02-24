@@ -1,12 +1,9 @@
-use tokio::sync::broadcast;
-use tokio::time::{sleep, Duration};
-use uuid::Uuid;
 use sqlx::PgPool;
-use tracing::{info, error, debug};
+use tokio::time::{sleep, Duration};
+use tracing::{debug, error, info};
 
-use crate::handlers::ws::TransactionStatusUpdate;
-use crate::stellar::HorizonClient;
 use crate::db::models::Transaction;
+use crate::stellar::HorizonClient;
 
 const POLL_INTERVAL_SECS: u64 = 5;
 
@@ -25,7 +22,7 @@ pub async fn run_processor(pool: PgPool, horizon_client: HorizonClient) {
     }
 }
 
-pub async fn process_batch(pool: &PgPool, horizon_client: &HorizonClient) -> anyhow::Result<()> {
+pub async fn process_batch(pool: &PgPool, _horizon_client: &HorizonClient) -> anyhow::Result<()> {
     let mut tx = pool.begin().await?;
 
     // Fetch pending transactions with row locking. SKIP LOCKED ensures we don't
@@ -60,4 +57,3 @@ pub async fn process_batch(pool: &PgPool, horizon_client: &HorizonClient) -> any
     tx.commit().await?;
     Ok(())
 }
-

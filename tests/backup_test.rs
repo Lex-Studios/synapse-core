@@ -46,11 +46,8 @@ async fn test_backup_list() -> Result<()> {
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://synapse:synapse@localhost:5432/synapse_test".to_string());
 
-    let service = synapse_core::services::backup::BackupService::new(
-        database_url,
-        backup_dir.clone(),
-        None,
-    );
+    let service =
+        synapse_core::services::backup::BackupService::new(database_url, backup_dir.clone(), None);
 
     // Create multiple backups
     service
@@ -118,11 +115,8 @@ async fn test_retention_policy() -> Result<()> {
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://synapse:synapse@localhost:5432/synapse_test".to_string());
 
-    let service = synapse_core::services::backup::BackupService::new(
-        database_url,
-        backup_dir.clone(),
-        None,
-    );
+    let service =
+        synapse_core::services::backup::BackupService::new(database_url, backup_dir.clone(), None);
 
     // Create 5 hourly backups
     for _ in 0..5 {
@@ -177,11 +171,8 @@ async fn test_backup_checksum_verification() -> Result<()> {
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://synapse:synapse@localhost:5432/synapse_test".to_string());
 
-    let service = synapse_core::services::backup::BackupService::new(
-        database_url,
-        backup_dir.clone(),
-        None,
-    );
+    let service =
+        synapse_core::services::backup::BackupService::new(database_url, backup_dir.clone(), None);
 
     let metadata = service
         .create_backup(synapse_core::services::backup::BackupType::Hourly)

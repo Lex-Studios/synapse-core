@@ -1,12 +1,12 @@
+use crate::ApiState;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     response::Json,
 };
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
-use crate::ApiState;
 use utoipa::IntoParams;
+use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct Pagination {

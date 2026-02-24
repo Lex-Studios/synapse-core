@@ -18,8 +18,12 @@ async fn test_graphql_queries() {
     };
 
     let pool = PgPool::connect(&database_url).await.unwrap();
-    let migrator =
-        Migrator::new(Path::join(Path::new(env!("CARGO_MANIFEST_DIR")), "migrations")).await.unwrap();
+    let migrator = Migrator::new(Path::join(
+        Path::new(env!("CARGO_MANIFEST_DIR")),
+        "migrations",
+    ))
+    .await
+    .unwrap();
     migrator.run(&pool).await.unwrap();
 
     let pool_manager = PoolManager::new(&database_url, None).await.unwrap();
@@ -59,7 +63,12 @@ async fn test_graphql_queries() {
         "callback_type": "deposit",
         "callback_status": "completed"
     });
-    let res = client.post(&callback_url).json(&payload).send().await.unwrap();
+    let res = client
+        .post(&callback_url)
+        .json(&payload)
+        .send()
+        .await
+        .unwrap();
     assert_eq!(res.status(), StatusCode::CREATED);
     let tx: serde_json::Value = res.json().await.unwrap();
     let tx_id = tx["id"].as_str().unwrap();

@@ -1,4 +1,4 @@
-use axum::{extract::State, Json, http::StatusCode, response::IntoResponse};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
@@ -36,9 +36,19 @@ pub async fn graphql_handler(
                     .into_iter()
                     .map(|t| json!({ "id": t.id.to_string(), "status": t.status }))
                     .collect();
-                return (StatusCode::OK, Json(json!({ "data": { "transactions": data } }))).into_response();
+                return (
+                    StatusCode::OK,
+                    Json(json!({ "data": { "transactions": data } })),
+                )
+                    .into_response();
             }
-            Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "errors": [{ "message": e.to_string() }] }))).into_response(),
+            Err(e) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({ "errors": [{ "message": e.to_string() }] })),
+                )
+                    .into_response()
+            }
         }
     }
 
@@ -47,18 +57,28 @@ pub async fn graphql_handler(
         if let Some(id) = id {
             match queries::get_transaction(&state.app_state.db, id).await {
                 Ok(t) => {
-                    return (StatusCode::OK, Json(json!({
-                        "data": {
-                            "transaction": {
-                                "id": t.id.to_string(),
-                                "status": t.status,
-                                "amount": t.amount.to_string(),
-                                "assetCode": t.asset_code
+                    return (
+                        StatusCode::OK,
+                        Json(json!({
+                            "data": {
+                                "transaction": {
+                                    "id": t.id.to_string(),
+                                    "status": t.status,
+                                    "amount": t.amount.to_string(),
+                                    "assetCode": t.asset_code
+                                }
                             }
-                        }
-                    }))).into_response()
+                        })),
+                    )
+                        .into_response()
                 }
-                Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "errors": [{ "message": e.to_string() }] }))).into_response(),
+                Err(e) => {
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(json!({ "errors": [{ "message": e.to_string() }] })),
+                    )
+                        .into_response()
+                }
             }
         }
     }
@@ -74,7 +94,11 @@ pub async fn graphql_handler(
             .await;
 
             if let Err(e) = updated {
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({ "errors": [{ "message": e.to_string() }] }))).into_response();
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(json!({ "errors": [{ "message": e.to_string() }] })),
+                )
+                    .into_response();
             }
 
             match queries::get_transaction(&state.app_state.db, id).await {
@@ -88,11 +112,19 @@ pub async fn graphql_handler(
         }
     }
 
-    (StatusCode::BAD_REQUEST, Json(json!({ "errors": [{ "message": "Unsupported GraphQL query" }] }))).into_response()
+    (
+        StatusCode::BAD_REQUEST,
+        Json(json!({ "errors": [{ "message": "Unsupported GraphQL query" }] })),
+    )
+        .into_response()
 }
 
 fn extract_id(query: &str) -> Option<Uuid> {
-    let marker = if query.contains("id: \"") { "id: \"" } else { "id:\"" };
+    let marker = if query.contains("id: \"") {
+        "id: \""
+    } else {
+        "id:\""
+    };
     let start = query.find(marker)? + marker.len();
     let remainder = &query[start..];
     let end = remainder.find('"')?;

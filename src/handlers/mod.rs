@@ -1,16 +1,16 @@
+pub mod admin;
+pub mod dlq;
 pub mod export;
 pub mod graphql;
+pub mod search;
 pub mod settlements;
-pub mod webhook;
-pub mod dlq;
-pub mod admin;
 pub mod v1;
 pub mod v2;
+pub mod webhook;
 pub mod ws;
-pub mod search;
 
-use crate::{AppState, ApiState};
-use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
+use crate::ApiState;
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -29,7 +29,6 @@ pub struct DbPoolStats {
     pub max_connections: u32,
     pub usage_percent: f32,
 }
-
 
 #[utoipa::path(
     get,
@@ -114,6 +113,6 @@ pub async fn error_catalog() -> impl IntoResponse {
         errors,
         version: "1.0.0".to_string(),
     };
-    
+
     (StatusCode::OK, Json(catalog))
 }

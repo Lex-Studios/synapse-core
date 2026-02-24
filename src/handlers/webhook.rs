@@ -1,19 +1,24 @@
-use crate::{ApiState, AppState};
+use crate::db::models::Transaction as TxModel;
 use crate::db::{models::Transaction, queries};
 use crate::error::AppError;
-use crate::validation::{
-    AMOUNT_INPUT_MAX_LEN, ANCHOR_TRANSACTION_ID_MAX_LEN, CALLBACK_STATUS_MAX_LEN,
-    CALLBACK_TYPE_MAX_LEN, sanitize_string, validate_asset_code, validate_max_len,
-    validate_positive_amount, validate_stellar_address,
-};
 use crate::utils::cursor as cursor_util;
-use axum::{Json, extract::{State, Path, Query}, http::StatusCode, response::IntoResponse};
+use crate::validation::{
+    sanitize_string, validate_asset_code, validate_max_len, validate_positive_amount,
+    validate_stellar_address, AMOUNT_INPUT_MAX_LEN, ANCHOR_TRANSACTION_ID_MAX_LEN,
+    CALLBACK_STATUS_MAX_LEN, CALLBACK_TYPE_MAX_LEN,
+};
+use crate::{ApiState, AppState};
+use axum::{
+    extract::{Path, Query, State},
+    http::StatusCode,
+    response::IntoResponse,
+    Json,
+};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use utoipa::ToSchema;
-use std::str::FromStr;
 use sqlx::types::BigDecimal;
-use crate::db::models::Transaction as TxModel;
+use std::str::FromStr;
+use utoipa::ToSchema;
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct CallbackPayload {
@@ -325,7 +330,8 @@ pub async fn callback(
         payload.metadata,
     );
 
-    let inserted = queries::insert_transaction(&state.app_state.db, &tx).await
+    let inserted = queries::insert_transaction(&state.app_state.db, &tx)
+        .await
         .map_err(|e| AppError::DatabaseError(e.to_string()))?;
 
     Ok((StatusCode::CREATED, Json(inserted)))
@@ -357,7 +363,7 @@ pub async fn handle_webhook(
 }
 
 /// Get a specific transaction
-/// 
+///
 /// Returns details for a specific transaction by ID
 #[utoipa::path(
     get,
@@ -376,7 +382,8 @@ pub async fn get_transaction(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, AppError> {
-    let transaction = queries::get_transaction(&state.app_state.db, id).await
+    let transaction = queries::get_transaction(&state.app_state.db, id)
+        .await
         .map_err(|e| match e {
             sqlx::Error::RowNotFound => AppError::NotFound(format!("Transaction {} not found", id)),
             _ => AppError::DatabaseError(e.to_string()),
@@ -435,7 +442,9 @@ pub async fn list_transactions(
     }
 
     // next cursor is the last item in the returned rows
-    let next_cursor = rows.last().map(|r: &TxModel| cursor_util::encode(r.created_at, r.id));
+    let next_cursor = rows
+        .last()
+        .map(|r: &TxModel| cursor_util::encode(r.created_at, r.id));
 
     let resp = serde_json::json!({
         "data": rows,
@@ -478,7 +487,9 @@ pub async fn list_transactions_api(
         rows.truncate(limit as usize);
     }
 
-    let next_cursor = rows.last().map(|r: &TxModel| cursor_util::encode(r.created_at, r.id));
+    let next_cursor = rows
+        .last()
+        .map(|r: &TxModel| cursor_util::encode(r.created_at, r.id));
 
     let resp = serde_json::json!({
         "data": rows,

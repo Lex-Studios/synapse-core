@@ -1,9 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
 use sqlx::types::BigDecimal;
+use sqlx::FromRow;
 use uuid::Uuid;
-use utoipa::ToSchema;
 
 #[derive(Debug, FromRow, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
@@ -26,22 +25,49 @@ pub struct Transaction {
 
 #[async_graphql::Object]
 impl Transaction {
-    async fn id(&self) -> String { self.id.to_string() }
-    async fn stellar_account(&self) -> &str { &self.stellar_account }
-    async fn amount(&self) -> String { self.amount.to_string() }
-    async fn asset_code(&self) -> &str { &self.asset_code }
-    async fn status(&self) -> &str { &self.status }
-    async fn created_at(&self) -> DateTime<Utc> { self.created_at }
-    async fn updated_at(&self) -> DateTime<Utc> { self.updated_at }
-    async fn anchor_transaction_id(&self) -> Option<&str> { self.anchor_transaction_id.as_deref() }
-    async fn callback_type(&self) -> Option<&str> { self.callback_type.as_deref() }
-    async fn callback_status(&self) -> Option<&str> { self.callback_status.as_deref() }
-    async fn settlement_id(&self) -> Option<String> { self.settlement_id.map(|id| id.to_string()) }
-    async fn memo(&self) -> Option<&str> { self.memo.as_deref() }
-    async fn memo_type(&self) -> Option<&str> { self.memo_type.as_deref() }
+    async fn id(&self) -> String {
+        self.id.to_string()
+    }
+    async fn stellar_account(&self) -> &str {
+        &self.stellar_account
+    }
+    async fn amount(&self) -> String {
+        self.amount.to_string()
+    }
+    async fn asset_code(&self) -> &str {
+        &self.asset_code
+    }
+    async fn status(&self) -> &str {
+        &self.status
+    }
+    async fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+    async fn updated_at(&self) -> DateTime<Utc> {
+        self.updated_at
+    }
+    async fn anchor_transaction_id(&self) -> Option<&str> {
+        self.anchor_transaction_id.as_deref()
+    }
+    async fn callback_type(&self) -> Option<&str> {
+        self.callback_type.as_deref()
+    }
+    async fn callback_status(&self) -> Option<&str> {
+        self.callback_status.as_deref()
+    }
+    async fn settlement_id(&self) -> Option<String> {
+        self.settlement_id.map(|id| id.to_string())
+    }
+    async fn memo(&self) -> Option<&str> {
+        self.memo.as_deref()
+    }
+    async fn memo_type(&self) -> Option<&str> {
+        self.memo_type.as_deref()
+    }
 }
 
 impl Transaction {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         stellar_account: String,
         amount: BigDecimal,
@@ -87,15 +113,33 @@ pub struct Settlement {
 
 #[async_graphql::Object]
 impl Settlement {
-    async fn id(&self) -> String { self.id.to_string() }
-    async fn asset_code(&self) -> &str { &self.asset_code }
-    async fn total_amount(&self) -> String { self.total_amount.to_string() }
-    async fn tx_count(&self) -> i32 { self.tx_count }
-    async fn period_start(&self) -> DateTime<Utc> { self.period_start }
-    async fn period_end(&self) -> DateTime<Utc> { self.period_end }
-    async fn status(&self) -> &str { &self.status }
-    async fn created_at(&self) -> DateTime<Utc> { self.created_at }
-    async fn updated_at(&self) -> DateTime<Utc> { self.updated_at }
+    async fn id(&self) -> String {
+        self.id.to_string()
+    }
+    async fn asset_code(&self) -> &str {
+        &self.asset_code
+    }
+    async fn total_amount(&self) -> String {
+        self.total_amount.to_string()
+    }
+    async fn tx_count(&self) -> i32 {
+        self.tx_count
+    }
+    async fn period_start(&self) -> DateTime<Utc> {
+        self.period_start
+    }
+    async fn period_end(&self) -> DateTime<Utc> {
+        self.period_end
+    }
+    async fn status(&self) -> &str {
+        &self.status
+    }
+    async fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+    async fn updated_at(&self) -> DateTime<Utc> {
+        self.updated_at
+    }
 }
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
@@ -116,8 +160,8 @@ pub struct TransactionDlq {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sqlx::PgPool;
     use sqlx::migrate::Migrator;
+    use sqlx::PgPool;
     use std::path::Path;
 
     async fn setup_test_db() -> PgPool {
@@ -268,7 +312,7 @@ mod tests {
                 .await
                 .unwrap();
         }
-        let transactions = crate::db::queries::list_transactions(&pool, 5, 0)
+        let transactions = crate::db::queries::list_transactions(&pool, 5, None, false)
             .await
             .unwrap();
         assert_eq!(transactions.len(), 5);
@@ -283,7 +327,7 @@ pub struct Asset {
 }
 
 impl Asset {
-    pub async fn fetch_all(pool: &sqlx::PgPool) -> Result<Vec<Self>, sqlx::Error> {
+    pub async fn fetch_all(_pool: &sqlx::PgPool) -> Result<Vec<Self>, sqlx::Error> {
         // Placeholder implementation - returns empty vec for now
         Ok(vec![])
     }
