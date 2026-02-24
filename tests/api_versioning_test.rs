@@ -57,7 +57,7 @@ async fn test_api_versioning_headers() {
 
     // 1. Test V1 health (expect deprecation headers)
     let res = client
-        .get(&format!("{}/v1/health", base_url))
+        .get(format!("{}/v1/health", base_url))
         .send()
         .await
         .unwrap();
@@ -69,7 +69,7 @@ async fn test_api_versioning_headers() {
 
     // 2. Test V2 health (no deprecation headers)
     let res = client
-        .get(&format!("{}/v2/health", base_url))
+        .get(format!("{}/v2/health", base_url))
         .send()
         .await
         .unwrap();
@@ -80,7 +80,7 @@ async fn test_api_versioning_headers() {
 
     // 3. Test backward compatibility route
     let res = client
-        .post(&format!("{}/callback/transaction", base_url))
+        .post(format!("{}/callback/transaction", base_url))
         .send()
         .await
         .unwrap();
@@ -90,7 +90,7 @@ async fn test_api_versioning_headers() {
 
     // Test V1 backward compatibility route
     let res = client
-        .post(&format!("{}/v1/callback/transaction", base_url))
+        .post(format!("{}/v1/callback/transaction", base_url))
         .send()
         .await
         .unwrap();
