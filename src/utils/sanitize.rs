@@ -21,8 +21,9 @@ pub fn sanitize_json(value: &Value) -> Value {
 }
 
 fn is_sensitive_field(key: &str) -> bool {
+    let key_lower = key.to_lowercase();
     matches!(
-        key.to_lowercase().as_str(),
+        key_lower.as_str(),
         "stellar_account"
             | "account"
             | "password"
@@ -30,7 +31,10 @@ fn is_sensitive_field(key: &str) -> bool {
             | "token"
             | "api_key"
             | "authorization"
-    )
+    ) || key_lower.contains("account")
+        || key_lower.contains("password")
+        || key_lower.contains("secret")
+        || key_lower.contains("token")
 }
 
 fn mask_value(value: &Value) -> Value {
