@@ -315,8 +315,8 @@ async fn test_request_logging_large_body() {
         .await
         .unwrap();
 
-    // Should return PAYLOAD_TOO_LARGE status
-    assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
+    // Large payloads are accepted; logging is truncated
+    assert_eq!(response.status(), StatusCode::OK);
 
     // Clean up
     std::env::remove_var("LOG_REQUEST_BODY");
