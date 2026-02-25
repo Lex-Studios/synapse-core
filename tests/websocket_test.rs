@@ -69,6 +69,7 @@ async fn setup_test_app() -> (
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_connection_with_valid_token() {
     let (base_url, _pool, _tx, _container) = setup_test_app().await;
 
@@ -88,6 +89,7 @@ async fn test_ws_connection_with_valid_token() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_connection_rejected_invalid_token() {
     let (base_url, _pool, _tx, _container) = setup_test_app().await;
 
@@ -114,6 +116,7 @@ async fn test_ws_connection_rejected_invalid_token() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_receives_transaction_updates() {
     let (base_url, _pool, tx_broadcast, _container) = setup_test_app().await;
 
@@ -154,6 +157,7 @@ async fn test_ws_receives_transaction_updates() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_multiple_clients_receive_broadcast() {
     let (base_url, _pool, tx_broadcast, _container) = setup_test_app().await;
 
@@ -217,6 +221,7 @@ async fn test_ws_multiple_clients_receive_broadcast() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_connection_cleanup_on_disconnect() {
     let (base_url, _pool, tx_broadcast, _container) = setup_test_app().await;
 
@@ -260,6 +265,7 @@ async fn test_ws_connection_cleanup_on_disconnect() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_heartbeat_keeps_connection_alive() {
     let (base_url, _pool, _tx, _container) = setup_test_app().await;
 
@@ -286,6 +292,7 @@ async fn test_ws_heartbeat_keeps_connection_alive() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_client_can_send_messages() {
     let (base_url, _pool, _tx, _container) = setup_test_app().await;
 
@@ -311,6 +318,7 @@ async fn test_ws_client_can_send_messages() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_handles_rapid_broadcasts() {
     let (base_url, _pool, tx_broadcast, _container) = setup_test_app().await;
 
@@ -353,6 +361,7 @@ async fn test_ws_handles_rapid_broadcasts() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_connection_with_empty_token() {
     let (base_url, _pool, _tx, _container) = setup_test_app().await;
 
