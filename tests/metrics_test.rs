@@ -53,10 +53,12 @@ async fn test_metrics_authentication() {
     use axum::{
         body::Body,
         http::{Request, StatusCode},
-        middleware::Next,
-        response::Response,
+        middleware,
+        routing::get,
+        Router,
     };
     use synapse_core::config::Config;
+    use tower::ServiceExt;
 
     let config = Config {
         server_port: 3000,
@@ -74,18 +76,24 @@ async fn test_metrics_authentication() {
         backup_encryption_key: None,
     };
 
-    let request = Request::builder()
-        .uri("/metrics")
-        .body(Body::empty())
+    let app = Router::new()
+        .route("/metrics", get(|| async { StatusCode::OK }))
+        .layer(middleware::from_fn_with_state(
+            config,
+            synapse_core::metrics::metrics_auth_middleware,
+        ));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/metrics")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
         .unwrap();
 
-    let next = Next::new(|_req: Request| async {
-        Ok::<Response, StatusCode>(Response::new(Body::empty()))
-    });
-
-    let result = metrics_auth_middleware(axum::extract::State(config), request, next).await;
-
-    assert!(result.is_ok());
+    assert_eq!(response.status(), StatusCode::OK);
 }
 
 #[test]
