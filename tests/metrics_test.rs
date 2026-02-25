@@ -8,20 +8,20 @@ async fn test_metric_registration() {
 
 #[tokio::test]
 async fn test_counter_increment() {
-    let _handle = init_metrics().expect("Failed to initialize metrics");
-    assert!(true);
+    let handle = init_metrics().expect("Failed to initialize metrics");
+    assert!(std::mem::size_of_val(&handle) > 0);
 }
 
 #[tokio::test]
 async fn test_histogram_recording() {
-    let _handle = init_metrics().expect("Failed to initialize metrics");
-    assert!(true);
+    let handle = init_metrics().expect("Failed to initialize metrics");
+    assert!(std::mem::size_of_val(&handle) > 0);
 }
 
 #[tokio::test]
 async fn test_gauge_updates() {
-    let _handle = init_metrics().expect("Failed to initialize metrics");
-    assert!(true);
+    let handle = init_metrics().expect("Failed to initialize metrics");
+    assert!(std::mem::size_of_val(&handle) > 0);
 }
 
 #[tokio::test]

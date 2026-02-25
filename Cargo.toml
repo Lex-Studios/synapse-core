@@ -39,6 +39,7 @@ failsafe = "1"
 clap = { version = "4", features = ["derive"] }
 tower = { version = "0.4", features = ["util"] }
 tower-http = { version = "0.4", features = ["cors"] }
+hyper = "0.14"
 arc-swap = "1"
 csv = "1"
 cron = "0.12"

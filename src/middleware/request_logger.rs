@@ -17,10 +17,8 @@ pub async fn request_logger_middleware(mut req: Request, next: Next) -> Response
     let start = Instant::now();
 
     // Insert request ID into headers for downstream handlers
-    req.headers_mut().insert(
-        "x-request-id",
-        request_id.parse().unwrap(),
-    );
+    req.headers_mut()
+        .insert("x-request-id", request_id.parse().unwrap());
 
     // Log request
     let log_body = std::env::var("LOG_REQUEST_BODY")
@@ -31,7 +29,7 @@ pub async fn request_logger_middleware(mut req: Request, next: Next) -> Response
     if log_body {
         // Extract and log body if enabled (with size limit)
         let (parts, body) = req.into_parts();
-        let bytes = match axum::body::to_bytes(body, MAX_BODY_LOG_SIZE).await {
+        let bytes = match hyper::body::to_bytes(body).await {
             Ok(bytes) => bytes,
             Err(_) => {
                 tracing::warn!(
@@ -44,8 +42,19 @@ pub async fn request_logger_middleware(mut req: Request, next: Next) -> Response
             }
         };
 
+        if bytes.len() > MAX_BODY_LOG_SIZE {
+            tracing::warn!(
+                request_id = %request_id,
+                method = %method,
+                uri = %uri,
+                "Request body too large or failed to read"
+            );
+            return (StatusCode::PAYLOAD_TOO_LARGE, "Request body too large").into_response();
+        }
+
         let body_str = String::from_utf8_lossy(&bytes);
-        let sanitized_body = if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body_str) {
+        let sanitized_body = if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body_str)
+        {
             let sanitized = crate::utils::sanitize::sanitize_json(&json);
             serde_json::to_string(&sanitized).unwrap_or_else(|_| "[invalid json]".to_string())
         } else {
@@ -74,7 +83,7 @@ pub async fn request_logger_middleware(mut req: Request, next: Next) -> Response
 
     // Process request
     let response = next.run(req).await;
-    
+
     let latency = start.elapsed();
     let status = response.status();
 
@@ -90,10 +99,9 @@ pub async fn request_logger_middleware(mut req: Request, next: Next) -> Response
 
     // Add request ID to response headers
     let (mut parts, body) = response.into_parts();
-    parts.headers.insert(
-        "x-request-id",
-        request_id.parse().unwrap(),
-    );
+    parts
+        .headers
+        .insert("x-request-id", request_id.parse().unwrap());
 
     Response::from_parts(parts, body)
 }
@@ -101,8 +109,8 @@ pub async fn request_logger_middleware(mut req: Request, next: Next) -> Response
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::{body::Body, routing::post, Router};
     use axum::http::Request;
+    use axum::{body::Body, routing::post, Router};
     use tower::ServiceExt;
 
     #[tokio::test]
