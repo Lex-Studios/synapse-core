@@ -167,6 +167,7 @@ async fn seed_test_data(pool: &PgPool) {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_search_by_status() {
     let (base_url, pool, _container) = setup_test_app().await;
     seed_test_data(&pool).await;
@@ -194,6 +195,7 @@ async fn test_search_by_status() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_search_by_asset_code() {
     let (base_url, pool, _container) = setup_test_app().await;
     seed_test_data(&pool).await;
@@ -220,6 +222,7 @@ async fn test_search_by_asset_code() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_search_by_date_range() {
     let (base_url, pool, _container) = setup_test_app().await;
     seed_test_data(&pool).await;
@@ -246,6 +249,7 @@ async fn test_search_by_date_range() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_search_pagination() {
     let (base_url, pool, _container) = setup_test_app().await;
     seed_test_data(&pool).await;
@@ -302,6 +306,7 @@ async fn test_search_pagination() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_search_empty_results() {
     let (base_url, pool, _container) = setup_test_app().await;
     seed_test_data(&pool).await;
@@ -325,6 +330,7 @@ async fn test_search_empty_results() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_search_invalid_parameters() {
     let (base_url, pool, _container) = setup_test_app().await;
     seed_test_data(&pool).await;
@@ -369,6 +375,7 @@ async fn test_search_invalid_parameters() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_search_combined_filters() {
     let (base_url, pool, _container) = setup_test_app().await;
     seed_test_data(&pool).await;
@@ -396,6 +403,7 @@ async fn test_search_combined_filters() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_search_by_stellar_account() {
     let (base_url, pool, _container) = setup_test_app().await;
     seed_test_data(&pool).await;
@@ -418,6 +426,7 @@ async fn test_search_by_stellar_account() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_search_with_amount_range() {
     let (base_url, pool, _container) = setup_test_app().await;
     seed_test_data(&pool).await;
@@ -445,6 +454,7 @@ async fn test_search_with_amount_range() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_search_limit_boundaries() {
     let (base_url, pool, _container) = setup_test_app().await;
     seed_test_data(&pool).await;
@@ -479,6 +489,7 @@ async fn test_search_limit_boundaries() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_search_no_next_cursor_on_last_page() {
     let (base_url, pool, _container) = setup_test_app().await;
     seed_test_data(&pool).await;
@@ -501,6 +512,7 @@ async fn test_search_no_next_cursor_on_last_page() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_search_ordering() {
     let (base_url, pool, _container) = setup_test_app().await;
     seed_test_data(&pool).await;
