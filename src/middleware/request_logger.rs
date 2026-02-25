@@ -1,7 +1,6 @@
 use axum::{
     body::Body,
-    extract::Request,
-    http::StatusCode,
+    http::{Request, StatusCode},
     middleware::Next,
     response::{IntoResponse, Response},
 };
@@ -10,7 +9,7 @@ use uuid::Uuid;
 
 const MAX_BODY_LOG_SIZE: usize = 1024; // 1KB limit for body logging
 
-pub async fn request_logger_middleware(mut req: Request, next: Next) -> Response {
+pub async fn request_logger_middleware(mut req: Request<Body>, next: Next<Body>) -> Response {
     let request_id = Uuid::new_v4().to_string();
     let method = req.method().clone();
     let uri = req.uri().clone();
