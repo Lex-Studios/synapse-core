@@ -19,7 +19,6 @@ struct DeliveryResult {
 struct TestDispatcher {
     client: reqwest::Client,
     secret: String,
-    timeout: Duration,
     max_retries: usize,
 }
 
@@ -33,7 +32,6 @@ impl TestDispatcher {
         Self {
             client,
             secret: secret.to_string(),
-            timeout,
             max_retries,
         }
     }
