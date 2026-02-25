@@ -1,11 +1,13 @@
+use axum::{routing::get, Router};
 use chrono::Utc;
 use futures::{SinkExt, StreamExt};
 use sqlx::{migrate::Migrator, PgPool};
 use std::path::Path;
 use synapse_core::db::pool_manager::PoolManager;
+use synapse_core::handlers::ws::ws_handler;
 use synapse_core::handlers::ws::TransactionStatusUpdate;
 use synapse_core::services::feature_flags::FeatureFlagService;
-use synapse_core::{create_app, AppState};
+use synapse_core::AppState;
 use testcontainers::runners::AsyncRunner;
 use testcontainers_modules::postgres::Postgres;
 use tokio::net::TcpListener;
@@ -35,7 +37,7 @@ async fn setup_test_app() -> (
     .unwrap();
     migrator.run(&pool).await.unwrap();
 
-    let pool_manager = PoolManager::new(pool.clone(), None);
+    let pool_manager = PoolManager::new(&database_url, None).await.unwrap();
     let (tx_broadcast, _) = broadcast::channel::<TransactionStatusUpdate>(100);
 
     let app_state = AppState {
@@ -44,20 +46,27 @@ async fn setup_test_app() -> (
         horizon_client: synapse_core::stellar::HorizonClient::new(
             "https://horizon-testnet.stellar.org".to_string(),
         ),
-        feature_flags: FeatureFlagService::new(false),
+        feature_flags: FeatureFlagService::new(pool.clone()),
         redis_url: "redis://localhost:6379".to_string(),
         start_time: std::time::Instant::now(),
         readiness: synapse_core::ReadinessState::new(),
         tx_broadcast: tx_broadcast.clone(),
     };
 
-    let app = create_app(app_state);
+    let app: Router = Router::new()
+        .route("/ws", get(ws_handler))
+        .with_state(app_state);
 
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
+    let std_listener = listener.into_std().unwrap();
 
     tokio::spawn(async move {
-        axum::serve(listener, app).await.unwrap();
+        axum::Server::from_tcp(std_listener)
+            .unwrap()
+            .serve(app.into_make_service())
+            .await
+            .unwrap();
     });
 
     let base_url = format!("ws://{}", addr);
