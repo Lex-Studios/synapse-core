@@ -92,7 +92,10 @@ async fn test_audit_log_on_insert() {
     .unwrap();
 
     assert_eq!(audit_log.get::<Uuid, _>("entity_id"), tx_id);
-    assert_eq!(audit_log.get::<String, _>("entity_type"), ENTITY_TRANSACTION);
+    assert_eq!(
+        audit_log.get::<String, _>("entity_type"),
+        ENTITY_TRANSACTION
+    );
     assert_eq!(audit_log.get::<String, _>("action"), "created");
     assert_eq!(audit_log.get::<String, _>("actor"), "system");
 
@@ -123,13 +126,12 @@ async fn test_audit_log_on_status_change() {
     db_tx.commit().await.unwrap();
 
     // Verify audit log
-    let audit_log = sqlx::query(
-        "SELECT action, old_val, new_val, actor FROM audit_logs WHERE entity_id = $1"
-    )
-    .bind(tx_id)
-    .fetch_one(&pool)
-    .await
-    .unwrap();
+    let audit_log =
+        sqlx::query("SELECT action, old_val, new_val, actor FROM audit_logs WHERE entity_id = $1")
+            .bind(tx_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
 
     assert_eq!(audit_log.get::<String, _>("action"), "status_update");
     assert_eq!(audit_log.get::<String, _>("actor"), "admin");
@@ -164,13 +166,12 @@ async fn test_audit_log_on_field_update() {
     db_tx.commit().await.unwrap();
 
     // Verify audit log
-    let audit_log = sqlx::query(
-        "SELECT action, old_val, new_val FROM audit_logs WHERE entity_id = $1"
-    )
-    .bind(tx_id)
-    .fetch_one(&pool)
-    .await
-    .unwrap();
+    let audit_log =
+        sqlx::query("SELECT action, old_val, new_val FROM audit_logs WHERE entity_id = $1")
+            .bind(tx_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
 
     assert_eq!(audit_log.get::<String, _>("action"), "settlement_id_update");
 
@@ -205,13 +206,12 @@ async fn test_audit_log_on_deletion() {
     db_tx.commit().await.unwrap();
 
     // Verify audit log
-    let audit_log = sqlx::query(
-        "SELECT action, old_val, new_val, actor FROM audit_logs WHERE entity_id = $1"
-    )
-    .bind(tx_id)
-    .fetch_one(&pool)
-    .await
-    .unwrap();
+    let audit_log =
+        sqlx::query("SELECT action, old_val, new_val, actor FROM audit_logs WHERE entity_id = $1")
+            .bind(tx_id)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
 
     assert_eq!(audit_log.get::<String, _>("action"), "deleted");
     assert_eq!(audit_log.get::<String, _>("actor"), "admin");
@@ -267,7 +267,7 @@ async fn test_audit_log_query() {
 
     // Query all logs for this entity
     let logs = sqlx::query(
-        "SELECT action, actor FROM audit_logs WHERE entity_id = $1 ORDER BY timestamp ASC"
+        "SELECT action, actor FROM audit_logs WHERE entity_id = $1 ORDER BY timestamp ASC",
     )
     .bind(tx_id)
     .fetch_all(&pool)
@@ -281,25 +281,22 @@ async fn test_audit_log_query() {
     assert_eq!(logs[2].get::<String, _>("actor"), "admin");
 
     // Query by entity_type
-    let type_logs = sqlx::query(
-        "SELECT COUNT(*) as count FROM audit_logs WHERE entity_type = $1"
-    )
-    .bind(ENTITY_TRANSACTION)
-    .fetch_one(&pool)
-    .await
-    .unwrap();
+    let type_logs = sqlx::query("SELECT COUNT(*) as count FROM audit_logs WHERE entity_type = $1")
+        .bind(ENTITY_TRANSACTION)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
 
     assert_eq!(type_logs.get::<i64, _>("count"), 3);
 
     // Query by actor
-    let actor_logs = sqlx::query(
-        "SELECT COUNT(*) as count FROM audit_logs WHERE entity_id = $1 AND actor = $2"
-    )
-    .bind(tx_id)
-    .bind("admin")
-    .fetch_one(&pool)
-    .await
-    .unwrap();
+    let actor_logs =
+        sqlx::query("SELECT COUNT(*) as count FROM audit_logs WHERE entity_id = $1 AND actor = $2")
+            .bind(tx_id)
+            .bind("admin")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
 
     assert_eq!(actor_logs.get::<i64, _>("count"), 1);
 }
@@ -335,13 +332,11 @@ async fn test_audit_log_immutability() {
     let original_action: String = audit_log.get("action");
 
     // Attempt to update the audit log (should succeed but violates compliance)
-    let update_result = sqlx::query(
-        "UPDATE audit_logs SET action = $1 WHERE id = $2"
-    )
-    .bind("modified")
-    .bind(audit_id)
-    .execute(&pool)
-    .await;
+    let update_result = sqlx::query("UPDATE audit_logs SET action = $1 WHERE id = $2")
+        .bind("modified")
+        .bind(audit_id)
+        .execute(&pool)
+        .await;
 
     // Verify update succeeded (no DB constraint prevents it)
     assert!(update_result.is_ok());
