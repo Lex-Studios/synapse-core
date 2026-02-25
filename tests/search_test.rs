@@ -22,6 +22,8 @@ async fn setup_test_app() -> (String, PgPool, impl std::any::Any) {
     migrator.run(&pool).await.unwrap();
 
     let pool_manager = PoolManager::new(pool.clone(), None);
+    let (tx_broadcast, _) = tokio::sync::broadcast::channel(100);
+    let query_cache = synapse_core::services::QueryCache::new("redis://localhost:6379").unwrap();
     
     let app_state = AppState {
         db: pool.clone(),
@@ -31,6 +33,8 @@ async fn setup_test_app() -> (String, PgPool, impl std::any::Any) {
         redis_url: "redis://localhost:6379".to_string(),
         start_time: std::time::Instant::now(),
         readiness: synapse_core::ReadinessState::new(),
+        tx_broadcast,
+        query_cache,
     };
     let app = create_app(app_state);
 
