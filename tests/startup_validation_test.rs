@@ -1,4 +1,4 @@
-use sqlx::{migrate::Migrator, PgPool};
+use sqlx::{migrate::Migrator, ConnectOptions, PgPool};
 use std::path::Path;
 use synapse_core::config::{AllowedIps, Config, LogFormat};
 use synapse_core::startup::validate_environment;
@@ -25,7 +25,7 @@ fn create_test_config(database_url: String, redis_url: String, horizon_url: Stri
 }
 
 /// Helper function to setup test database with migrations
-async fn setup_test_database() -> (PgPool, String, impl std::any::Any) {
+async fn setup_test_database() -> (PgPool, impl std::any::Any) {
     let container = Postgres::default().start().await.unwrap();
     let host_port = container.get_host_port_ipv4(5432).await.unwrap();
     let database_url = format!(
@@ -42,13 +42,14 @@ async fn setup_test_database() -> (PgPool, String, impl std::any::Any) {
     .unwrap();
     migrator.run(&pool).await.unwrap();
 
-    (pool, database_url, container)
+    (pool, container)
 }
 
 #[tokio::test]
 async fn test_validation_all_healthy() {
     // Setup test database
-    let (pool, database_url, _container) = setup_test_database().await;
+    let (pool, _container) = setup_test_database().await;
+    let database_url = pool.connect_options().to_url_lossy().to_string();
 
     // Use real Stellar testnet Horizon (publicly available)
     let horizon_url = "https://horizon-testnet.stellar.org".to_string();
@@ -110,7 +111,8 @@ async fn test_validation_database_unavailable() {
 #[tokio::test]
 async fn test_validation_redis_unavailable() {
     // Setup valid database
-    let (pool, database_url, _container) = setup_test_database().await;
+    let (pool, _container) = setup_test_database().await;
+    let database_url = pool.connect_options().to_url_lossy().to_string();
 
     // Use invalid Redis URL
     let invalid_redis_url = "redis://127.0.0.1:9999".to_string();
@@ -137,7 +139,8 @@ async fn test_validation_redis_unavailable() {
 #[tokio::test]
 async fn test_validation_horizon_unavailable() {
     // Setup valid database
-    let (pool, database_url, _container) = setup_test_database().await;
+    let (pool, _container) = setup_test_database().await;
+    let database_url = pool.connect_options().to_url_lossy().to_string();
 
     let redis_url = "redis://127.0.0.1:6379".to_string();
 
@@ -166,7 +169,8 @@ async fn test_validation_horizon_unavailable() {
 #[tokio::test]
 async fn test_validation_report_generation() {
     // Setup test database
-    let (pool, database_url, _container) = setup_test_database().await;
+    let (pool, _container) = setup_test_database().await;
+    let database_url = pool.connect_options().to_url_lossy().to_string();
 
     // Mix of valid and invalid services
     let invalid_redis_url = "redis://127.0.0.1:9999".to_string();
@@ -200,7 +204,7 @@ async fn test_validation_report_generation() {
 #[tokio::test]
 async fn test_validation_empty_database_url() {
     // Setup test database for pool
-    let (pool, _database_url, _container) = setup_test_database().await;
+    let (pool, _container) = setup_test_database().await;
 
     // Create config with empty database URL
     let config = create_test_config(
@@ -228,7 +232,8 @@ async fn test_validation_empty_database_url() {
 #[tokio::test]
 async fn test_validation_invalid_horizon_url_format() {
     // Setup test database
-    let (pool, database_url, _container) = setup_test_database().await;
+    let (pool, _container) = setup_test_database().await;
+    let database_url = pool.connect_options().to_url_lossy().to_string();
 
     // Create config with invalid URL format
     let config = create_test_config(
@@ -253,7 +258,8 @@ async fn test_validation_invalid_horizon_url_format() {
 #[tokio::test]
 async fn test_validation_multiple_failures() {
     // Setup test database
-    let (pool, database_url, _container) = setup_test_database().await;
+    let (pool, _container) = setup_test_database().await;
+    let database_url = pool.connect_options().to_url_lossy().to_string();
 
     // Create config with multiple invalid services
     let config = create_test_config(
