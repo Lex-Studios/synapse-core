@@ -59,12 +59,16 @@ pub fn create_app(app_state: AppState) -> Router {
     let callback_routes = Router::new()
         .route("/callback", post(handlers::webhook::callback))
         .route("/callback/transaction", post(handlers::webhook::callback))
-        .layer(axum_middleware::from_fn(crate::middleware::validate::validate_callback));
+        .layer(axum_middleware::from_fn(
+            crate::middleware::validate::validate_callback,
+        ));
 
     // Webhook route with validation middleware
     let webhook_routes = Router::new()
         .route("/webhook", post(handlers::webhook::handle_webhook))
-        .layer(axum_middleware::from_fn(crate::middleware::validate::validate_webhook));
+        .layer(axum_middleware::from_fn(
+            crate::middleware::validate::validate_webhook,
+        ));
 
     Router::new()
         .route("/health", get(handlers::health))

@@ -29,7 +29,7 @@ pub async fn validate_with_schema(
 ) -> Response {
     // Extract body
     let (parts, body) = request.into_parts();
-    
+
     let bytes = match hyper::body::to_bytes(body).await {
         Ok(b) => b,
         Err(e) => {
