@@ -1,6 +1,6 @@
-use redis::{aio::MultiplexedConnection, AsyncCommands, Client, Script};
+use redis::{AsyncCommands, Client, Script};
 use std::time::Duration;
-use tokio::time::{sleep, timeout};
+use tokio::time::sleep;
 use tracing::{debug, warn};
 use uuid::Uuid;
 
