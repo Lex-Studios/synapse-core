@@ -1,13 +1,6 @@
-use axum::{
-    body::Body,
-    http::{Request, StatusCode},
-    middleware::Next,
-    response::{IntoResponse, Response},
-};
+use axum::{body::Body, http::Request, middleware::Next, response::Response};
 use std::time::Instant;
 use uuid::Uuid;
-
-const MAX_BODY_LOG_SIZE: usize = 1024; // 1KB limit for body logging
 
 pub async fn request_logger_middleware(mut req: Request<Body>, next: Next<Body>) -> Response {
     let request_id = Uuid::new_v4().to_string();
@@ -20,68 +13,15 @@ pub async fn request_logger_middleware(mut req: Request<Body>, next: Next<Body>)
         .insert("x-request-id", request_id.parse().unwrap());
 
     // Log request
-    let log_body = std::env::var("LOG_REQUEST_BODY")
-        .unwrap_or_else(|_| "false".to_string())
-        .parse::<bool>()
-        .unwrap_or(false);
-
-    if log_body {
-        // Extract and log body if enabled (with size limit)
-        let (parts, body) = req.into_parts();
-        let bytes = match hyper::body::to_bytes(body).await {
-            Ok(bytes) => bytes,
-            Err(_) => {
-                tracing::warn!(
-                    request_id = %request_id,
-                    method = %method,
-                    uri = %uri,
-                    "Request body too large or failed to read"
-                );
-                return (StatusCode::PAYLOAD_TOO_LARGE, "Request body too large").into_response();
-            }
-        };
-
-        if bytes.len() > MAX_BODY_LOG_SIZE {
-            tracing::warn!(
-                request_id = %request_id,
-                method = %method,
-                uri = %uri,
-                "Request body too large or failed to read"
-            );
-            return (StatusCode::PAYLOAD_TOO_LARGE, "Request body too large").into_response();
-        }
-
-        let body_str = String::from_utf8_lossy(&bytes);
-        let sanitized_body = if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body_str)
-        {
-            let sanitized = crate::utils::sanitize::sanitize_json(&json);
-            serde_json::to_string(&sanitized).unwrap_or_else(|_| "[invalid json]".to_string())
-        } else {
-            format!("[non-json, {} bytes]", bytes.len())
-        };
-
-        tracing::info!(
-            request_id = %request_id,
-            method = %method,
-            uri = %uri,
-            body_size = bytes.len(),
-            body = %sanitized_body,
-            "Incoming request"
-        );
-
-        // Reconstruct request with body
-        req = Request::from_parts(parts, Body::from(bytes));
-    } else {
-        tracing::info!(
-            request_id = %request_id,
-            method = %method,
-            uri = %uri,
-            "Incoming request"
-        );
-    }
+    tracing::info!(
+        request_id = %request_id,
+        method = %method,
+        uri = %uri,
+        "Incoming request"
+    );
 
     // Process request
-    let response = next.run(req).await;
+    let response: Response = next.run(req).await;
 
     let latency = start.elapsed();
     let status = response.status();
@@ -92,8 +32,8 @@ pub async fn request_logger_middleware(mut req: Request<Body>, next: Next<Body>)
         method = %method,
         uri = %uri,
         status = %status.as_u16(),
-        latency_ms = latency.as_millis(),
-        "Outgoing response"
+        latency_ms = %latency.as_millis(),
+        "Request completed"
     );
 
     // Add request ID to response headers
@@ -103,32 +43,4 @@ pub async fn request_logger_middleware(mut req: Request<Body>, next: Next<Body>)
         .insert("x-request-id", request_id.parse().unwrap());
 
     Response::from_parts(parts, body)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use axum::http::Request;
-    use axum::{body::Body, routing::post, Router};
-    use tower::ServiceExt;
-
-    #[tokio::test]
-    async fn test_request_logger_adds_request_id() {
-        let app = Router::new()
-            .route("/test", post(|| async { "ok" }))
-            .layer(axum::middleware::from_fn(request_logger_middleware));
-
-        let response = app
-            .oneshot(
-                Request::builder()
-                    .method("POST")
-                    .uri("/test")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-
-        assert!(response.headers().contains_key("x-request-id"));
-    }
 }

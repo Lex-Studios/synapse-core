@@ -88,6 +88,7 @@ async fn insert_tx(pool: &PgPool, tx: &Transaction) -> Transaction {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_settle_single_asset() {
     let (pool, _container) = setup_test_db().await;
     let service = SettlementService::new(pool.clone());
@@ -122,6 +123,7 @@ async fn test_settle_single_asset() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_settle_multiple_transactions() {
     let (pool, _container) = setup_test_db().await;
     let service = SettlementService::new(pool.clone());
@@ -185,6 +187,7 @@ async fn test_settle_multiple_transactions() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_settle_no_unsettled_transactions() {
     let (pool, _container) = setup_test_db().await;
     let service = SettlementService::new(pool.clone());
@@ -194,6 +197,7 @@ async fn test_settle_no_unsettled_transactions() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_settle_error_handling() {
     let (pool, _container) = setup_test_db().await;
     let service = SettlementService::new(pool.clone());
@@ -209,6 +213,7 @@ async fn test_settle_error_handling() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_asset_grouping() {
     let (pool, _container) = setup_test_db().await;
     let service = SettlementService::new(pool.clone());
