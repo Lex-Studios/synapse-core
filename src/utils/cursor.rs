@@ -31,6 +31,7 @@ pub fn decode(cursor: &str) -> Result<(DateTime<Utc>, Uuid), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Utc;
 
     #[test]
     fn test_cursor_encode_decode_roundtrip() {

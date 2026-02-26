@@ -3,25 +3,25 @@ use synapse_core::metrics::*;
 #[tokio::test]
 async fn test_metric_registration() {
     let handle = init_metrics().expect("Failed to initialize metrics");
-    assert!(std::mem::size_of_val(&handle) > 0);
+    let _ = handle; // Verify handle is created successfully
 }
 
 #[tokio::test]
 async fn test_counter_increment() {
     let _handle = init_metrics().expect("Failed to initialize metrics");
-    assert!(true);
+    // Test passes if metrics initialize successfully
 }
 
 #[tokio::test]
 async fn test_histogram_recording() {
     let _handle = init_metrics().expect("Failed to initialize metrics");
-    assert!(true);
+    // Test passes if metrics initialize successfully
 }
 
 #[tokio::test]
 async fn test_gauge_updates() {
     let _handle = init_metrics().expect("Failed to initialize metrics");
-    assert!(true);
+    // Test passes if metrics initialize successfully
 }
 
 #[tokio::test]
@@ -49,20 +49,17 @@ async fn test_prometheus_export_format() {
 }
 
 #[tokio::test]
-#[tokio::test]
-#[ignore] // TODO: Fix this test - Next::new doesn't exist in current axum version
+#[ignore = "Middleware testing requires complex setup with axum 0.6"]
 async fn test_metrics_authentication() {
-    // This test needs to be rewritten for the current axum version
-    // The Next::new API doesn't exist anymore
+    // Test disabled - requires Next::new which doesn't exist in axum 0.6
+    // TODO: Rewrite this test for axum 0.6 compatibility
 }
 
 #[test]
 fn test_metrics_handle_clone() {
     let handle = init_metrics().expect("Failed to initialize metrics");
-    let cloned = handle.clone();
-
-    assert!(std::mem::size_of_val(&handle) > 0);
-    assert!(std::mem::size_of_val(&cloned) > 0);
+    let _cloned = handle.clone();
+    // Verify cloning works for MetricsHandle
 }
 
 #[test]
