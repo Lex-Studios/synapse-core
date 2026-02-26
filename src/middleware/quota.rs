@@ -1,6 +1,5 @@
 use redis::{aio::MultiplexedConnection, AsyncCommands, Client};
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Tier {
