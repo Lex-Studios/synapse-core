@@ -35,9 +35,8 @@ async fn setup_test_app() -> (
     .unwrap();
     migrator.run(&pool).await.unwrap();
 
-    let pool_manager = PoolManager::new(pool.clone(), None);
+    let pool_manager = PoolManager::new(&database_url, None).await.unwrap();
     let (tx_broadcast, _) = broadcast::channel::<TransactionStatusUpdate>(100);
-    let query_cache = synapse_core::services::QueryCache::new("redis://localhost:6379").unwrap();
 
     let app_state = AppState {
         db: pool.clone(),
@@ -45,12 +44,11 @@ async fn setup_test_app() -> (
         horizon_client: synapse_core::stellar::HorizonClient::new(
             "https://horizon-testnet.stellar.org".to_string(),
         ),
-        feature_flags: FeatureFlagService::new(false),
+        feature_flags: FeatureFlagService::new(pool.clone()),
         redis_url: "redis://localhost:6379".to_string(),
         start_time: std::time::Instant::now(),
         readiness: synapse_core::ReadinessState::new(),
         tx_broadcast: tx_broadcast.clone(),
-        query_cache,
     };
 
     let app = create_app(app_state);
@@ -59,7 +57,11 @@ async fn setup_test_app() -> (
     let addr = listener.local_addr().unwrap();
 
     tokio::spawn(async move {
-        axum::serve(listener, app).await.unwrap();
+        axum::Server::from_tcp(listener.into_std().unwrap())
+            .unwrap()
+            .serve(app.into_make_service())
+            .await
+            .unwrap();
     });
 
     let base_url = format!("ws://{}", addr);
@@ -67,6 +69,7 @@ async fn setup_test_app() -> (
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_connection_with_valid_token() {
     let (base_url, _pool, _tx, _container) = setup_test_app().await;
 
@@ -86,6 +89,7 @@ async fn test_ws_connection_with_valid_token() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_connection_rejected_invalid_token() {
     let (base_url, _pool, _tx, _container) = setup_test_app().await;
 
@@ -112,6 +116,7 @@ async fn test_ws_connection_rejected_invalid_token() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_receives_transaction_updates() {
     let (base_url, _pool, tx_broadcast, _container) = setup_test_app().await;
 
@@ -152,6 +157,7 @@ async fn test_ws_receives_transaction_updates() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_multiple_clients_receive_broadcast() {
     let (base_url, _pool, tx_broadcast, _container) = setup_test_app().await;
 
@@ -215,6 +221,7 @@ async fn test_ws_multiple_clients_receive_broadcast() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_connection_cleanup_on_disconnect() {
     let (base_url, _pool, tx_broadcast, _container) = setup_test_app().await;
 
@@ -258,6 +265,7 @@ async fn test_ws_connection_cleanup_on_disconnect() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_heartbeat_keeps_connection_alive() {
     let (base_url, _pool, _tx, _container) = setup_test_app().await;
 
@@ -284,6 +292,7 @@ async fn test_ws_heartbeat_keeps_connection_alive() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_client_can_send_messages() {
     let (base_url, _pool, _tx, _container) = setup_test_app().await;
 
@@ -309,6 +318,7 @@ async fn test_ws_client_can_send_messages() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_handles_rapid_broadcasts() {
     let (base_url, _pool, tx_broadcast, _container) = setup_test_app().await;
 
@@ -351,6 +361,7 @@ async fn test_ws_handles_rapid_broadcasts() {
 }
 
 #[tokio::test]
+#[ignore = "Requires Docker for testcontainers"]
 async fn test_ws_connection_with_empty_token() {
     let (base_url, _pool, _tx, _container) = setup_test_app().await;
 
